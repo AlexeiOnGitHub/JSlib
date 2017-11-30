@@ -747,7 +747,7 @@
         _script = document.createElement("script");
         _script.setAttribute("type","text/javascript");
         _script.setAttribute("src", href_);
-        if (js.detectIE()<11){
+        if (js.detectIE() && js.detectIE()<11){
             _script.onreadystatechange = function() {
                 // CODE
                 switch (_script.readyState){
