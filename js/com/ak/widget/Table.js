@@ -14,6 +14,8 @@
  *  Modifications:
  *    Version   Date        Auth  Description
  *    --------  ----------  ----  ---------------------------------------------
+ *    01-01a02  04.12.2017  AK    1. Add table rebuild on window size change.
+ *    --------  ----------  ----  ---------------------------------------------
  *    01-01a01  10.10.2017  AK    1. initial creation
  *    --------  ----------  ----  ---------------------------------------------
  */
@@ -23,7 +25,7 @@ js.include(["com.ak.widget._Widget",
             "com.ak.model.DataModel"], 
             function(_Widget, ColumnDescriptor, DataModel){
     // CODE
-    js.define({module:"com.ak.widget.Table", version:"0101a01"}, 
+    js.define({module:"com.ak.widget.Table", version:"0101a02"}, 
               [_Widget], 
               function (/*Object*/ prm_){
 
@@ -35,11 +37,14 @@ js.include(["com.ak.widget._Widget",
     //-- hh:        header height; default: 50px
     //-- ch:        cell height; default: 50px
     //-- lstnrs:    array of descriptors of table/row/cell listeners
+    //-- getHeight: function to get height of table on rebuild
 
     //----------------------------------------------------------
     //-- precheck & fields
     //----------------------------------------------------------
 
+    var _self = this;
+    
     if (!prm_){
         throw new Error("Parameter 'prm' is absent.");
     } //-- end if
@@ -55,6 +60,11 @@ js.include(["com.ak.widget._Widget",
     var _model = prm_.model;
     if (_model && _model.getClass && _model.getClass()!="DataModel"){
         throw new Error("Parameter field 'model' has wrong type. Expected an instance of 'com.ak.model.DataModel'.");
+    } //-- end if
+
+    var _getHeight = prm_.getHeight;
+    if (_getHeight && !js.isFunction(_getHeight)){
+        throw new Error("Parameter field 'getHeight' has wrong type. Expected a Function that returns integer value.");
     } //-- end if
     
     var _viewProfile = [];
@@ -296,16 +306,23 @@ js.include(["com.ak.widget._Widget",
 
     this.rebuild = /*void*/ function (/*void*/){
         // VARS
-        var _self=this, _item;
+        var _item, _height;
         // CODE
         _viewGrid = _model.getGrid().filter(function(x){return _filters.every(function(y){y(x);});})
                                     .sort(function (x, y){return _sortByRowId.apply(_self, [x, y]);})
                                     .sort(function (x, y){return _sortRow.apply(_self, [x, y]);});
         _item = _renderTable();
         if (_item){
+//            _height = _root.style.height;
             js.removeChildren(_root);
             _root.appendChild(_item);
-            _body.style.height = (_root.offsetHeight-_header.offsetHeight)+"px";
+            if (_getHeight){
+                _height = _getHeight();
+                _root.style.height = _height + "px";
+                _body.style.height = (_height-_header.offsetHeight)+"px";
+            }else{
+                _body.style.height = (_root.offsetHeight-_header.offsetHeight)+"px";
+            } //-- end if
             _body.scrollTop = (_oldVerticalScroll<_body.scrollTopMax?_oldVerticalScroll:_body.scrollTopMax);
         } //-- end if
     };
@@ -323,5 +340,7 @@ js.include(["com.ak.widget._Widget",
     if (prm_.ch){_ch = +prm_.ch;}
     //--
     _model.addListener("change", this, _onDataChange);
-
+    if (_getHeight){
+        window.addEventListener("resize", function (e_) {_self.rebuild();});
+    } //-- end if
 });});
