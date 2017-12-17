@@ -283,4 +283,10 @@ js.include(["com.ak.util.HashMap"], function(HashMap){
     //----------------------------------------------------------
     this.getGrid = /*Array of items*/ function () {return _items.getValues();};
 
+    //----------------------------------------------------------
+    this.getRow = /*items*/ function (/*item*/ key_) {return _items.get(key_);};
+
+    //----------------------------------------------------------
+    this.getKeys = /*items*/ function () {return _items.getKeys();};
+
 });});
