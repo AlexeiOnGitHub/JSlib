@@ -14,6 +14,8 @@
  *  Modifications:
  *    Version   Date        Auth  Description
  *    --------  ----------  ----  ---------------------------------------------
+ *    01-01a03  17.12.2017  AK    1. Add table sort support.
+ *    --------  ----------  ----  ---------------------------------------------
  *    01-01a02  04.12.2017  AK    1. Add table rebuild on window size change.
  *    --------  ----------  ----  ---------------------------------------------
  *    01-01a01  10.10.2017  AK    1. initial creation
@@ -25,14 +27,14 @@ js.include(["com.ak.widget._Widget",
             "com.ak.model.DataModel"], 
             function(_Widget, ColumnDescriptor, DataModel){
     // CODE
-    js.define({module:"com.ak.widget.Table", version:"0101a02"}, 
+    js.define({module:"com.ak.widget.Table", version:"0101a03"}, 
               [_Widget], 
               function (/*Object*/ prm_){
 
     //---------------
     //-- markers:   string of markers, separated by space; i.e. "marker1 marker2"
     //-- classes:   string of classes, separated by space; i.e. "class1 class2"
-    //-- acd:       array of ColumnDescriptor objects (mandatory)
+    //-- cds:       array of ColumnDescriptor objects (mandatory)
     //-- model:     DataModel object (mandatory)
     //-- hh:        header height; default: 50px
     //-- ch:        cell height; default: 50px
@@ -51,10 +53,10 @@ js.include(["com.ak.widget._Widget",
 
     var _cds = prm_.cds;
     if (!_cds){
-        throw new Error("Parameter field 'acd' is absent. Expected a non-empty array of 'com.ak.widget.ColumnDescriptor'.");
+        throw new Error("Parameter field 'cds' is absent. Expected a non-empty array of 'com.ak.widget.ColumnDescriptor'.");
     } //-- end if
     if (!js.isArray(_cds) || _cds.length<1 || !_cds.every(function(x){return x && x.getClass && x.getClass()==="ColumnDescriptor";})){
-        throw new Error("Parameter field 'acd' has wrong type. Expected a non-empty array of 'com.ak.widget.ColumnDescriptor'.");
+        throw new Error("Parameter field 'cds' has wrong type. Expected a non-empty array of 'com.ak.widget.ColumnDescriptor'.");
     } //-- end if
 
     var _model = prm_.model;
@@ -167,7 +169,10 @@ js.include(["com.ak.widget._Widget",
         js.addClass(_headrow, "page-tableheaderrow");
         _viewProfile.forEach(function(x, i){
             // CODE
-            _headrow.appendChild(_renderHeaderCell(_left, _cds[x], i));
+            _elem = _renderHeaderCell(_left, _cds[x], i);
+            _elem.__headrow = _headrow;
+            _elem.__cd = _cds[x];
+            _headrow.appendChild(_elem);
             _left += _cds[x].getWidth();
         });
         _headrow.style.height = _hh+"px";
@@ -185,7 +190,7 @@ js.include(["com.ak.widget._Widget",
     //--
     var _renderHeaderCell = /*HTMLElement*/ function (/*int*/ left_, /*ColumnDescriptor*/ cd_, /*int*/ colIdx_) {
         // VARS
-        var _headcell, _wrap1, _wrap2, _wrap3, _content;
+        var _headcell, _wrap1, _wrap2, _wrap3, _content, _elem;
         // CODE
         _headcell = document.createElement("div");
         _wrap1 = document.createElement("div"); _wrap1.__headcell = _headcell;
@@ -202,13 +207,31 @@ js.include(["com.ak.widget._Widget",
         if (colIdx_===0){
             _headcell.style.borderWidth = "0";
         } //-- end if
-        _content.appendChild(cd_.renderHeader(_content, cd_, colIdx_));
+        _elem = cd_.renderHeader(_content, cd_, colIdx_);
+        if (_sortProfile.length>0 && _sortProfile[0]===cd_){
+            _elem.innerHTML += cd_.isSortOrderAsc()?"&#x25bc;":"&#x25b2;";
+        } //-- end if
+        _content.appendChild(_elem);
         _wrap3.appendChild(_content);
         _wrap2.appendChild(_wrap3);
         _wrap1.appendChild(_wrap2);
         _headcell.appendChild(_wrap1);
         //-- add listeners
         _lstnrs_hcell.forEach(function(x){_headcell.addEventListener(x.event, x.func);});
+        if (cd_.isSortable()){
+//js.log(">>> adding listener to header cell", _headcell);
+            _headcell.addEventListener("click", function(){
+                // CODE
+//js.log(">>> cd:", cd_);
+                if (_sortProfile.length>0 && _sortProfile[0]===cd_){
+                    cd_.changeSortOrder();
+                }else{
+                    cd_.setSortOrderAsc(true);
+                    _sortProfile = [cd_];
+                } //-- end if
+                _self.rebuild();
+            });
+        } //-- end if
         return _headcell;
     };
     //--
@@ -271,14 +294,18 @@ js.include(["com.ak.widget._Widget",
         // VARS
         var _rv=0;
         // CODE
-        _sortProfile.some(function (x){ /* {cd, dir} */
+        _sortProfile.some(function (x){ /*cd*/
             // VAR
-            var _cd=x.cd, _idx=_cds.indexOf(_cd) ;
+            var _idx = _cds.indexOf(x) ;
             // CODE
-            _rv = _cd.sort.apply(_cd, [_cd.getValue(row1_, _idx), _cd.getValue(row2_, _idx)]);
-            _rv = (_rv===0 || x.dir==="asc")?_rv:(-_rv);
+            _rv = x.sort(x.getValue(row1_, _idx), x.getValue(row2_, _idx));
+
+//js.log(">>> cd index:", _idx, "; row1:", row1_, "; row2:", row2_, "; cd:", x);
+//js.log(">>>    val1:", x.getValue(row1_, _idx), "; val2:", x.getValue(row2_, _idx), "; rv:", _rv, "; order:", x.isSortOrderAsc());
+            _rv = (_rv===0 || x.isSortOrderAsc())?_rv:(-_rv);
           return _rv;
         });
+//js.log(">>> _rv:", _rv);
         return _rv;
     };
     //--
@@ -287,17 +314,6 @@ js.include(["com.ak.widget._Widget",
         var _uid1 = row1_.__uid, _uid2 = row2_.__uid;
         // CODE
         return _uid1<_uid2?-1:(_uid1>_uid2?1:0);
-    };
-    //--
-    var _onDataChange = /*void*/ function (/*Object*/ changes_) {
-        //VARS
-        var _uids;
-        //CODE
-        if (changes_.del.length>0 ||
-            changes_.upd.length>0 ||
-            changes_.ins.length>0){
-            this.rebuild();
-        } //-- end if
     };
 
     //----------------------------------------------------------
@@ -309,8 +325,8 @@ js.include(["com.ak.widget._Widget",
         var _item, _height;
         // CODE
         _viewGrid = _model.getGrid().filter(function(x){return _filters.every(function(y){y(x);});})
-                                    .sort(function (x, y){return _sortByRowId.apply(_self, [x, y]);})
-                                    .sort(function (x, y){return _sortRow.apply(_self, [x, y]);});
+                                    .sort(function (x, y){return _sortByRowId(x, y);})
+                                    .sort(function (x, y){return _sortRow(x, y);});
         _item = _renderTable();
         if (_item){
 //            _height = _root.style.height;
@@ -339,7 +355,6 @@ js.include(["com.ak.widget._Widget",
     if (prm_.hh){_hh = +prm_.hh;}
     if (prm_.ch){_ch = +prm_.ch;}
     //--
-    _model.addListener("change", this, _onDataChange);
     if (_getHeight){
         window.addEventListener("resize", function (e_) {_self.rebuild();});
     } //-- end if

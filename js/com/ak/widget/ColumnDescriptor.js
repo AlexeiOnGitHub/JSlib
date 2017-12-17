@@ -14,13 +14,15 @@
  *  Modifications:
  *    Version   Date        Auth  Description
  *    --------  ----------  ----  ---------------------------------------------
+ *    01-01a02  17.12.2017  AK    1. Add table sort support.
+ *    --------  ----------  ----  ---------------------------------------------
  *    01-01a01  10.10.2017  AK    1. initial creation
  *    --------  ----------  ----  ---------------------------------------------
  */
 
 js.include([], function(){
     // CODE
-    js.define({module:"com.ak.widget.ColumnDescriptor", version:"0101a01"}, 
+    js.define({module:"com.ak.widget.ColumnDescriptor", version:"0101a02"}, 
               [], 
               function (/*Object*/ prm_){
 
@@ -70,6 +72,7 @@ js.include([], function(){
     if (prm_.sortable===false){
         _sortable = false;
     } //-- end if
+    var _sortOrderAsc = true;
 
     var _filterable = true;
     if (prm_.filterable===false){
@@ -131,6 +134,20 @@ js.include([], function(){
     this.setDefaultSortingFunction = /*void*/ function (){
         this.sort = _defaultSortingFunction;
     };
+    //--
+    this.setSortOrderAsc = /*void*/ function (/*boolean*/ val_){
+        _sortOrderAsc = val_===true;
+    };
+    //--
+    this.changeSortOrder = /*void*/ function (){
+        _sortOrderAsc = !_sortOrderAsc;
+    };
+
+    //--
+    this.isSortable = /*int*/ function (){return _sortable;};
+
+    //--
+    this.isSortOrderAsc = /*int*/ function (){return _sortOrderAsc;};
 
     //--
     this.getWidth = /*int*/ function (){return _width;};
