@@ -428,7 +428,7 @@
             var _counter = 0;
             // CODE
             while (_counter<_eventListeners.length) {
-                var _eventListener = _eventListeners[counter];
+                var _eventListener = _eventListeners[_counter];
                 if (_eventListener.object==this && 
                     _eventListener.type==type_ && 
                     _eventListener.listener==func_) {
