@@ -14,6 +14,8 @@
  *  Modifications:
  *    Version   Date        Auth  Description
  *    --------  ----------  ----  ---------------------------------------------
+ *    01-01a03  15.02.2018  AK    1. adjust(): add 'skipDel' parameter for incremental adjustment.
+ *    --------  ----------  ----  ---------------------------------------------
  *    01-01a02  16.11.2017  AK    1. new js.define is used to define module
  *    --------  ----------  ----  ---------------------------------------------
  *    01-01a01  26.09.2017  AK    1. initial creation
@@ -22,7 +24,7 @@
 
 js.include(["com.ak.util.HashMap"], function(HashMap){
     // CODE
-    js.define({module:"com.ak.model.DataModel", version:"0101a02"}, 
+    js.define({module:"com.ak.model.DataModel", version:"0101a03"}, 
               [], 
               function (/*Array of strings*/ allFields_, /*Array of strings*/ keyFields_){
 
@@ -235,7 +237,7 @@ js.include(["com.ak.util.HashMap"], function(HashMap){
     };
 
     //----------------------------------------------------------
-    this.adjust = /*void*/ function (/*Array of items*/ items_) {
+    this.adjust = /*void*/ function (/*Array of items*/ items_, /*boolean*/ skipDel_) {
         // VARS
         var _err, _values=[], _keys=[], _changes={del:[], upd:[], ins:[]};
         // CODE
@@ -251,12 +253,14 @@ js.include(["com.ak.util.HashMap"], function(HashMap){
             _values.push(_filterAllFields(x));
             _keys.push(_filterKeyFields(x));
         });
-        _items.getKeys().forEach(function(x){
-            // CODE
-            if (_keys.every(function(y){return js.stringify(x)!==js.stringify(y);})){
-                _changes.del.push(_items.remove(x));
-            } //-- end if
-        });
+        if (!skipDel_){
+            _items.getKeys().forEach(function(x){
+                // CODE
+                if (_keys.every(function(y){return js.stringify(x)!==js.stringify(y);})){
+                    _changes.del.push(_items.remove(x));
+                } //-- end if
+            });
+        } //-- end if
         _keys.forEach(function(x, i){
             // VARS
             var _v, _ov;
