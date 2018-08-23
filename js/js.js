@@ -327,6 +327,14 @@
         ['forEach', 'map', 'filter', 'reduce', 'reduceRight', 'every', 'some'].forEach(function (p){
             HTMLSelectElement.prototype[p] = Array.prototype[p];
         });
+        try {
+            HTMLCollection;
+            ['forEach', 'map', 'filter', 'reduce', 'reduceRight', 'every', 'some'].forEach(function (p){
+                HTMLCollection.prototype[p] = Array.prototype[p];
+            });
+        }
+        catch (e){
+        }
     }else{
         ['forEach', 'map', 'filter', 'reduce', 'reduceRight', 'every', 'some'].forEach(function (p){
             HTMLCollection.prototype[p] = NodeList.prototype[p] = FileList.prototype[p] = Array.prototype[p];
