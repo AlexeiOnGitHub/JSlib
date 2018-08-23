@@ -14,6 +14,8 @@
  *  Modifications:
  *    Version   Date        Auth  Description
  *    --------  ----------  ----  ---------------------------------------------
+ *    01-01a03  22.08.2018  AK    1. Add table filter support.
+ *    --------  ----------  ----  ---------------------------------------------
  *    01-01a02  17.12.2017  AK    1. Add table sort support.
  *    --------  ----------  ----  ---------------------------------------------
  *    01-01a01  10.10.2017  AK    1. initial creation
@@ -22,7 +24,7 @@
 
 js.include([], function(){
     // CODE
-    js.define({module:"com.ak.widget.ColumnDescriptor", version:"0101a02"}, 
+    js.define({module:"com.ak.widget.ColumnDescriptor", version:"0101a03"}, 
               [], 
               function (/*Object*/ prm_){
 
@@ -148,6 +150,9 @@ js.include([], function(){
 
     //--
     this.isSortOrderAsc = /*int*/ function (){return _sortOrderAsc;};
+
+    //--
+    this.isFilterable = /*int*/ function (){return _filterable;};
 
     //--
     this.getWidth = /*int*/ function (){return _width;};

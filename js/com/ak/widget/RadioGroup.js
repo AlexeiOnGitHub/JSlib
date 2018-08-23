@@ -14,13 +14,15 @@
  *  Modifications:
  *    Version   Date        Auth  Description
  *    --------  ----------  ----  ---------------------------------------------
+ *    01-01a02  21.08.2018  AK    init() modification
+ *    --------  ----------  ----  ---------------------------------------------
  *    01-01a01  01.11.2017  AK    1. initial creation
  *    --------  ----------  ----  ---------------------------------------------
  */
 
 js.include(["com.ak.widget._Widget"], function(_Widget){
     // CODE
-    js.define({module:"com.ak.widget.RadioGroup", version:"0101a01"}, 
+    js.define({module:"com.ak.widget.RadioGroup", version:"0101a02"}, 
               [_Widget], 
               function (/*Object?*/ prm_){
 
@@ -84,7 +86,7 @@ js.include(["com.ak.widget._Widget"], function(_Widget){
     //--
     this.init = /*String*/ function (/*Array of Strings*/ arr_) {
         // CODE
-        if (_rbs.length==0){
+        if (_rbs.length===0){
             arr_.forEach(function(x){
                 // VARS
                 var _rb = document.createElement("input");
